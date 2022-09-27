@@ -36,6 +36,7 @@ _KEY_GPU = 'gpu'
 _KEY_MODEL = 'model'
 _KEY_NETWORK_DEF = 'network_def'
 _KEY_NUM_OUT_CHANNELS = 'num_out_channels'
+_KEY_IT_TIME = 'iteration_time'
 
 # Supported network_utils
 network_utils_all = sorted(name for name in networkUtils.__dict__
@@ -191,6 +192,7 @@ def _save_and_print_history(network_utils, history, pickle_file_path, text_file_
                                                        history[_KEY_HISTORY][iter][_KEY_RESOURCE],
                                                        history[_KEY_HISTORY][iter][_KEY_BLOCK],
                                                        history[_KEY_HISTORY][iter][_KEY_SOURCE_MODEL_PATH],
+                                                       history[_KEY_HISTORY][iter][_KEY_IT_TIME],
                                                        num_filters_str))
 
 
@@ -313,7 +315,9 @@ def master(args):
                                       _KEY_SOURCE_MODEL_PATH: args.init_model_path,
                                       _KEY_ACCURACY: current_accuracy,
                                       _KEY_BLOCK: current_block,
-                                      _KEY_NETWORK_DEF: network_def})
+                                      _KEY_NETWORK_DEF: network_def,
+                                      _KEY_IT_TIME: 0})
+                                      
         _save_and_print_history(network_utils, history, history_pickle_file, history_text_file)
         del model, network_def
 
@@ -399,17 +403,23 @@ def master(args):
         if type(model) is dict:
             model = model[_KEY_MODEL]
         network_def = network_utils.get_network_def_from_model(model)
+
+        iteration_time = time.time()-start_time
+
         history[_KEY_HISTORY].append({_KEY_RESOURCE: current_resource,
                                       _KEY_SOURCE_MODEL_PATH: best_model_path,
                                       _KEY_ACCURACY: current_accuracy,
                                       _KEY_BLOCK: current_block,
-                                      _KEY_NETWORK_DEF: network_def})
+                                      _KEY_NETWORK_DEF: network_def,
+                                      _KEY_IT_TIME: iteration_time})
         _save_and_print_history(network_utils, history, history_pickle_file, history_text_file)
         del model, network_def
 
+        print('Finish iteration {}: time {}'.format(current_iter, iteration_time))
+
         current_iter += 1
         
-        print('Finish iteration {}: time {}'.format(current_iter-1, time.time()-start_time))
+        
 
 
 if __name__ == '__main__':
